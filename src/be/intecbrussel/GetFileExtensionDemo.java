@@ -1,12 +1,13 @@
 package be.intecbrussel;
 
 
-import java.io.File;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Formatter;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -15,11 +16,15 @@ public class GetFileExtensionDemo {
     public static void main(String[] args) {
         Path path = Paths.get("unsorted");
         Path destination = Paths.get("sorted");
+        Path pathSummary = destination.resolve("Summary/Summary.txt");
 
         try {
-            Path[] files = Files.walk(path)
-                    .toArray(Path[]::new);
-            sortAndCopy(files, destination);
+            Object[] paths = Files.walk(path)
+                    .filter(e -> !Files.isDirectory(e))
+                    .toArray();
+            sortAndCopy(paths, destination);
+            createSummary(pathSummary);
+            writeSummary(pathSummary);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -29,6 +34,29 @@ public class GetFileExtensionDemo {
 //        createDirectories(getFileExtentions(path));
 //        moveFiles(path);
 
+    }
+
+    private static void createSummary(Path pathSummary){
+        try {
+            Files.createDirectories(pathSummary.getParent());
+            if (!Files.exists(pathSummary)){
+                Files.createFile(pathSummary);
+            }
+        } catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeSummary(Path path){
+        try (FileWriter fileWriter = new FileWriter(path.toFile(), true);
+             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)){
+            StringBuilder sb = new StringBuilder();
+            Formatter output = new Formatter(sb);
+            output.format("%-15s %-15s %-15s %2f\n" , "tes4455454t", "test","test", 0.420);
+            bufferedWriter.write(sb.toString());
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
 //    private static void moveFiles(Path path) {
@@ -65,26 +93,28 @@ public class GetFileExtensionDemo {
 
 
     public static void sortAndCopy(Object[] paths,
-                                   Path sorted_folder) throws IOException {
-
+                                   Path sortedFolder) throws IOException {
+        int counter = 0;
         for (Object p : paths) {
-
             String filePath = p.toString();
             String fileName = filePath.substring(
-                    filePath.lastIndexOf("//") + 1);
+                    filePath.lastIndexOf("\\") + 1);
             String extension = filePath.substring(
                     filePath.lastIndexOf(".") + 1);
-            Path newPath = sorted_folder.resolve(extension);
+            Path newPath = sortedFolder.resolve(extension);
             if (Files.isHidden(Paths.get(filePath))) {
-                newPath = sorted_folder.resolve("hidden");
+                newPath = sortedFolder.resolve("hidden");
             }
-            System.out.println(newPath);
             if (Files.notExists(newPath)) {
                 Files.createDirectories(newPath);
             }
             if (Files.notExists(newPath.resolve(fileName))) {
-                Files.move(Paths.get(filePath), newPath.resolve(fileName),
-                           REPLACE_EXISTING);
+//                do {
+//                    counter ++;
+//                } while (Files.exists(newPath.resolve(fileName)));
+//                Files.move(Paths.get(filePath), newPath.resolve(fileName + "(" + counter + ")"));
+//            } else {
+                Files.move(Paths.get(filePath), newPath.resolve(fileName));
             }
         }
     }
