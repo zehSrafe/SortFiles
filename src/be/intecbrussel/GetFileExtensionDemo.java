@@ -13,25 +13,25 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GetFileExtensionDemo {
+    // Class variable for summary indentation
     private static int maxLength = 0;
 
     public static void main(String[] args) {
-        Path path = Paths.get("unsorted");
-        Path destination = Paths.get("sorted");
-        Path pathSummary = destination.resolve("Summary/Summary.txt");
+        Path unsortedPath = Paths.get("unsorted");
+        Path sortedPath = Paths.get("sorted");
+        Path pathSummaryFile = sortedPath.resolve("summary/Summary.txt");
 
-        try {
-            sortAndCopy(getFilesInDirectory(path), destination);
-            createSummary(pathSummary);
-            writeSummary(getFilesInDirectory(destination), pathSummary);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Sorting started");
+
+        sortAndMove(getFilesInDirectory(unsortedPath), sortedPath);
+        createSummary(pathSummaryFile);
+        writeSummary(getFilesInDirectory(sortedPath), pathSummaryFile);
     }
 
 
     private static List<Path> getFilesInDirectory(Path path) {
         try {
+            // gets all paths from files in directory
             Stream<Path> walk = Files.walk(path);
             List<Path> paths = walk.filter(e -> !Files.isDirectory(e))
                     .collect(Collectors.toList());
@@ -41,6 +41,36 @@ public class GetFileExtensionDemo {
         }
         return null;
     }
+
+
+    public static void sortAndMove(List<Path> paths, Path sortedFolder){
+        try {
+            for (Path p : paths) {
+                // Converting path to string for extracting filemame and extension
+                String filePath = p.toString();
+                String fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
+                String extension = filePath.substring(filePath.lastIndexOf(".") + 1);
+
+                // create path to new directory
+                Path newPath = sortedFolder.resolve(extension);
+                // If a hidden file exsist -> create hidden directory
+                if (Files.isHidden(Paths.get(filePath))) {
+                    newPath = sortedFolder.resolve("hidden");
+                }
+                // Create directories if they don't exist yet
+                if (Files.notExists(newPath)) {
+                    Files.createDirectories(newPath);
+                }
+                // Move the files if not present in sorted directory
+                if (Files.notExists(newPath.resolve(fileName))) {
+                    Files.move(Paths.get(filePath), newPath.resolve(fileName));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private static void createSummary(Path pathSummary){
         try {
@@ -53,7 +83,9 @@ public class GetFileExtensionDemo {
         }
     }
 
-    private static void writeSummary(List<Path> paths, Path pathSummary){
+
+    private static void writeSummary(List<Path> paths, Path pathSummary) {
+        // Find greatest length of filename (used for proper indentaion)
         for (Path p : paths) {
             String filePath = p.toString();
             String fileName = filePath.substring(
@@ -66,24 +98,28 @@ public class GetFileExtensionDemo {
 
         try (FileWriter fileWriter = new FileWriter(pathSummary.toFile());
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)){
-
             StringBuilder sb = new StringBuilder();
             Formatter output = new Formatter(sb);
+            // Create proper indentation based on greatest length of filename
             String formatNumberHeader = "%-" + (maxLength + 5) + "s";
             String formatNumber = "%." + (maxLength + 5) + "s";
 
+            // Construct header
             output.format(formatNumberHeader + "|       %s        |       %s      |\n" , "name", "readable", "writeable");
 
+            // Help variables used to determin when directory changes
             String oldDir = "";
+            // Help variables used for cleaner look
             String readableFile = "";
             String writableFile = "";
-
             for (Path p : paths){
+                // Converting path to string for extracting filemame and directory name
                 String filePath = p.toString();
                 String fileName = filePath.substring(filePath.lastIndexOf("\\") + 1);
                 String parentDirectories = p.getParent().toString();
                 String directoryName = parentDirectories.substring(parentDirectories.lastIndexOf("\\") + 1);
 
+                // Construct directory layout
                 if (!directoryName.equals(oldDir)){
                     oldDir = directoryName;
                     output.format("\n");
@@ -94,36 +130,17 @@ public class GetFileExtensionDemo {
                     output.format(formatNumber, "---------------------------------------------------------------------------------------------------------------------------------------------");
                     output.format("\n");
                     output.format("\n");
-
                 }
+                // Construct file layout and determin readable/writable
                 readableFile = Files.isReadable(p) ? "X" : "/";
                 writableFile = Files.isWritable(p) ? "X" : "/";
                 output.format(formatNumberHeader + "|           %s           |          %s           |\n" , fileName, readableFile, writableFile);
             }
+            // Write everything to summary.txt
             bufferedWriter.write(sb.toString());
+            System.out.println("Files sorted :)");
         } catch (IOException e){
             e.printStackTrace();
-        }
-    }
-
-    public static void sortAndCopy(List<Path> paths, Path sortedFolder) throws IOException {
-        for (Path p : paths) {
-            String filePath = p.toString();
-            String fileName = filePath.substring(
-                    filePath.lastIndexOf("\\") + 1);
-            String extension = filePath.substring(
-                    filePath.lastIndexOf(".") + 1);
-
-            Path newPath = sortedFolder.resolve(extension);
-            if (Files.isHidden(Paths.get(filePath))) {
-                newPath = sortedFolder.resolve("hidden");
-            }
-            if (Files.notExists(newPath)) {
-                Files.createDirectories(newPath);
-            }
-            if (Files.notExists(newPath.resolve(fileName))) {
-                Files.move(Paths.get(filePath), newPath.resolve(fileName));
-            }
         }
     }
 }
