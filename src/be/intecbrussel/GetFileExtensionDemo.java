@@ -14,8 +14,6 @@ import java.util.stream.Stream;
 
 public class GetFileExtensionDemo {
     private static int maxLength = 0;
-    // FOLDERS
-    // FILES
 
     public static void main(String[] args) {
         Path path = Paths.get("unsorted");
@@ -74,7 +72,7 @@ public class GetFileExtensionDemo {
             String formatNumberHeader = "%-" + (maxLength + 5) + "s";
             String formatNumber = "%." + (maxLength + 5) + "s";
 
-            output.format(formatNumberHeader + "| %s | %s |\n" , "name", "       readable       ","       writeable       ");
+            output.format(formatNumberHeader + "|       %s        |       %s      |\n" , "name", "readable", "writeable");
 
             String oldDir = "";
             String readableFile = "";
@@ -88,18 +86,19 @@ public class GetFileExtensionDemo {
 
                 if (!directoryName.equals(oldDir)){
                     oldDir = directoryName;
+                    output.format("\n");
                     output.format(formatNumber , "---------------------------------------------------------------------------------------------------------------------------------------------");
                     output.format("\n");
                     output.format(formatNumber, directoryName + ":");
                     output.format("\n");
                     output.format(formatNumber, "---------------------------------------------------------------------------------------------------------------------------------------------");
                     output.format("\n");
+                    output.format("\n");
 
                 }
                 readableFile = Files.isReadable(p) ? "X" : "/";
                 writableFile = Files.isWritable(p) ? "X" : "/";
                 output.format(formatNumberHeader + "|           %s           |          %s           |\n" , fileName, readableFile, writableFile);
-                System.out.println(p);
             }
             bufferedWriter.write(sb.toString());
         } catch (IOException e){
@@ -107,10 +106,8 @@ public class GetFileExtensionDemo {
         }
     }
 
-    public static void sortAndCopy(List<Path> paths,
-                                   Path sortedFolder) throws IOException {
+    public static void sortAndCopy(List<Path> paths, Path sortedFolder) throws IOException {
         for (Path p : paths) {
-//            System.out.println(p);
             String filePath = p.toString();
             String fileName = filePath.substring(
                     filePath.lastIndexOf("\\") + 1);
