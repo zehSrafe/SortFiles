@@ -137,7 +137,6 @@ public class GetFileExtensionDemo {
                 output.format(formatNumberHeader + "|           %s           |          %s           |\n" , fileName, readableFile, writableFile);
             }
             // Write everything to summary.txt
-
             bufferedWriter.write(sb.toString());
             System.out.println("Files sorted :)");
         } catch (IOException e){
